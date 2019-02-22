@@ -1,0 +1,208 @@
+﻿@model MindFork.Models.Student
+@{
+    ViewBag.Title = "Create";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h2>Create</h2>
+@using (Html.BeginForm()) 
+{
+    @Html.AntiForgeryToken()
+    
+    <div class="form-horizontal">
+        <h4>Student</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        <div class="form-group">
+            @Html.LabelFor(model => model.StudentId, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.StudentId, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.StudentId, "", new { @class = "text-danger" })
+            </div>
+        </div>
+        <div class="form-group">
+            @Html.LabelFor(model => model.StudentName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.StudentName, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.StudentName, "", new { @class = "text-danger" })
+            </div>
+        </div>
+        <div class="form-group">
+            @Html.LabelFor(model => model.SubjectId, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownList("SubjectId", null,"--Select Subject--", htmlAttributes: new { @class = "form-control" })
+                @Html.ValidationMessageFor(model => model.SubjectId, "", new { @class = "text-danger" })
+            </div>
+        </div>
+        <div class="form-group">
+            @Html.LabelFor(model => model.Mark, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Mark, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Mark, "", new { @class = "text-danger" })
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="button" id ="BtnSubmit" value="Add to Table" class="btn btn-success" />
+            </div>
+        </div>
+    </div>
+}
+<table id ="studentTable"class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.Subject.SubjectName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.StudentId)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.StudentName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Mark)
+        </th>
+        <th></th>
+    </tr>
+    
+</table>
+<div>
+    <input type="button" id="btnSave" value="Save to Database" class="btn btn-primary" />
+</div>
+    <div>
+        @Html.ActionLink("Back to List", "Index")
+    </div>
+@section Scripts {
+
+    @Scripts.Render("~/bundles/jqueryval")
+    <script src="~/Scripts/jquery.validate.unobtrusive.js"></script>
+    <script>
+
+    var pre = 0;
+    $(document).ready(function () {
+
+        $("#StudentId").change(function () {
+            var studentId = $("#StudentId").val();
+            var jsnFormatData = { studentId: studentId };
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("GetStudentById", "Students")',
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(jsnFormatData),
+                dataType: "json",
+                success: function (data) {
+                    $.each(data, function (key, value) {
+                        $("#StudentName").val(value.StudentName);
+                    });
+                }
+            });
+        });
+        $("#SubjectId").change(function () {
+            var StudentId = $("#StudentId").val();
+            var SubjectId = $("#SubjectId").val();
+            var jsnFormatData = { StudentId: StudentId, SubjectId: SubjectId };
+            $("#Mark").val("");
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("GetMarksByIdandSubId", "Students")',
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify(jsnFormatData),
+                    dataType: "json",
+                    success: function(data) {
+                        $.each(data, function(key, value) {
+                            $("#Mark").val(value.Mark);
+                        });
+                    }
+                });
+            });
+        $("#BtnSubmit").click(function () {
+                
+                var stuId = $("#StudentId").val();
+                var stuName = $("#StudentName").val();
+                var subject = $('#SubjectId option:selected').text();
+                var mark = $("#Mark").val();
+                var table = document.getElementById("studentTable");
+                var tblLength = table.rows.length;
+                var isExist = isExistsRow(tblLength, table, stuId, stuName, subject);
+                if (isExist) {
+                    table.rows[pre].cells[3].innerHTML = mark;
+                    pre = 0;
+                    resetTextBox();
+                } else {
+                    var row = table.insertRow(tblLength);
+                    var cell1 = row.insertCell(0);
+                    var cell2 = row.insertCell(1);
+                    var cell3 = row.insertCell(2);
+                    var cell4 = row.insertCell(3);
+                    cell1.innerHTML = stuId;
+                    cell2.innerHTML = stuName;
+                    cell3.innerHTML = subject;
+                    cell4.innerHTML = mark;
+                    resetTextBox();
+                }
+            });
+
+            $("#btnSave").click(function() {
+                var students = new Array();
+                var table = document.getElementById("studentTable");
+                var tblLength = table.rows.length;
+               // console.log(tblLength);
+                if (tblLength===1) {
+                    alert("Table is Empty");
+                    return false;
+                }
+                for (var i = 1; i < tblLength; i++) {
+                    var student = {};
+                    student.StudentId = table.rows[i].cells[0].innerHTML;
+                    student.StudentName = table.rows[i].cells[1].innerHTML;
+                    student.Subject = table.rows[i].cells[2].innerHTML;
+                    student.Mark = table.rows[i].cells[3].innerHTML;
+                    students.push(student);
+                    //console.log(students);
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("InsertCustomers", "Students")',
+                    data: JSON.stringify(students),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (r) {
+                        alert(r + " record(s) inserted.");
+                        tableReset(tblLength, table);
+                       // $("#studentTable").remove();
+
+                    }
+                });
+            });
+
+        });
+
+        function resetTextBox() {
+            $("#StudentId").val("");
+            $("#StudentName").val("");
+            $('#SubjectId').prop('selectedIndex', 0);
+            $("#Mark").val("");
+        }
+
+        function isExistsRow(tblLength, table, stuId, stuName, subject) {
+            for (var i = 1; i < tblLength; i++) {
+                var previousId = table.rows[i].cells[0].innerHTML;
+                var previousName = table.rows[i].cells[1].innerHTML;
+                var preSubject = table.rows[i].cells[2].innerHTML;
+                if (previousId === stuId
+                    && previousName.trim().toLowerCase() === stuName.trim().toLowerCase()
+                    && preSubject === subject) {
+                    pre = i;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function tableReset(tblLength, table) {
+            for (var i = table.rows.length - 1; i > 0; i--) {
+                table.deleteRow(i);
+            }
+        }
+    </script>
+}

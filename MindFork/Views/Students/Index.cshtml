@@ -1,0 +1,57 @@
+﻿@model IEnumerable<MindFork.Models.Student>
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Index</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create")
+
+</p>
+
+<input type="button" value="Generate Report" class="btn btn-primary" onclick="location.href = '@Url.Action("ExpertPdf", "Students")'"/>
+<br/>
+<br/>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.Subject.SubjectName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.StudentId)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.StudentName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Mark)
+        </th>
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.Subject.SubjectName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.StudentId)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.StudentName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Mark)
+        </td>
+        <td>
+            @Html.ActionLink("Edit", "Edit", new { id=item.S_Id }) |
+            @Html.ActionLink("Details", "Details", new { id=item.S_Id }) |
+            @Html.ActionLink("Delete", "Delete", new { id=item.S_Id })
+        </td>
+    </tr>
+}
+
+</table>
